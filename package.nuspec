@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+		<id>ImageComparison</id>
+		<version>2.0.0</version>
+		<authors>Thomas Piart, Jakob XnaFan Krarup</authors>
+		<summary>A set of .NET extension methods to get the difference between images and more...</summary>
+		<description>A set of .NET extension methods to get the difference between images and more...</description>
+		<language>en-US</language>
+		<licenseUrl>https://github.com/tomap/ImageComparison/license</licenseUrl>
+		<projectUrl>https://github.com/tomap/ImageComparison</projectUrl>
+		<tags>ImageComparison XnaFan</tags>
+	</metadata>
+	<files>
+		<file src="ImageComparison\bin\Release\XnaFan.ImageComparison.dll" target="lib\net45" />
+		<file src="ImageComparison\bin\Release\XnaFan.ImageComparison.pdb" target="lib\net45" />
+	</files>
+</package>
+
