@@ -1,3 +1,4 @@
 *.suo
 bin/
 obj/
+/TestingImageComparison_Console/SampleImages
