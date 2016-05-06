@@ -52,10 +52,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArrayComparer.cs" />
-    <Compile Include="ComInterop\ComImageTool.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Histogram.cs" />
-    <Compile Include="ComInterop\_ImageTool.cs" />
     <Compile Include="ImageTool.cs" />
     <Compile Include="PathGrayscaleTupleComparer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
