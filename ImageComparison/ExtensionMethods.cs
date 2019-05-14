@@ -16,6 +16,14 @@ namespace XnaFan.ImageComparison
             CompressSize = new Size(width, height);
         }
 
+        public static void SetMaximumSize(Bitmap firstBmp, Bitmap secondBmp, float avgSize)
+        {
+            float w = Math.Min(firstBmp.Width, secondBmp.Width);
+            float h = Math.Min(firstBmp.Height, secondBmp.Height);
+            float avg = Math.Min((float)w / avgSize, (float)h / avgSize);
+            SetCompressSize((int)Math.Round(w / avg), (int)Math.Round(h / avg));
+        }
+
         //the font to use for the DifferenceImages
         private static readonly Font DefaultFont = new Font("Arial", 8);
 
@@ -35,7 +43,7 @@ namespace XnaFan.ImageComparison
 
         //the colormatrix needed to grayscale an image
         //http://www.switchonthecode.com/tutorials/csharp-tutorial-convert-a-color-image-to-grayscale
-        static readonly ColorMatrix ColorMatrix = new ColorMatrix(new float[][] 
+        static readonly ColorMatrix ColorMatrix = new ColorMatrix(new float[][]
         {
             new float[] {.3f, .3f, .3f, 0, 0},
             new float[] {.59f, .59f, .59f, 0, 0},
@@ -54,8 +62,15 @@ namespace XnaFan.ImageComparison
         public static float PercentageDifference(this Image img1, Image img2, float threshold = 0.2f)
         {
             float average = 0;
-            float[,] differences = img1.GetDifferences(img2, ref average);
-
+            return img1.GetDifferences(img2, ref average).PercentageDifference(average, threshold);
+        }
+        public static float PercentageDifference(this byte[,] img1, byte[,] img2, float threshold = 0.2f)
+        {
+            float average = 0;
+            return img1.GetDifferences(img2, ref average).PercentageDifference(average, threshold);
+        }
+        public static float PercentageDifference(this float[,] differences, float average, float threshold = 0.2f)
+        {
             int diffPixels = 0;
 
             foreach (float b in differences)
@@ -78,6 +93,11 @@ namespace XnaFan.ImageComparison
             byte[,] img1GrayscaleValues = img1.GetGrayScaleValues();
             byte[,] img2GrayscaleValues = img2.GetGrayScaleValues();
 
+            return BhattacharyyaDifference(img1GrayscaleValues, img2GrayscaleValues);
+
+        }
+        public static float BhattacharyyaDifference(this byte[,] img1GrayscaleValues, byte[,] img2GrayscaleValues)
+        {
             var normalizedHistogram1 = new double[CompressSize.Width, CompressSize.Height];
             var normalizedHistogram2 = new double[CompressSize.Width, CompressSize.Height];
 
@@ -212,20 +232,26 @@ namespace XnaFan.ImageComparison
             float[,] differences = new float[CompressSize.Width, CompressSize.Height];
             byte[,] firstGray = thisOne.GetGrayScaleValues();
             byte[,] secondGray = theOtherOne.GetGrayScaleValues();
+            thisOne.Dispose();
+            theOtherOne.Dispose();
+
+            return GetDifferences(firstGray, secondGray, ref average);
+        }
+        public static float[,] GetDifferences(this byte[,] firstGray, byte[,] secondGray, ref float average)
+        {
+            float[,] differences = new float[CompressSize.Width, CompressSize.Height];
             float avg = 0;
 
             for (int y = 0; y < CompressSize.Height; y++)
             {
                 for (int x = 0; x < CompressSize.Width; x++)
                 {
-                    differences[x, y] = (float)firstGray[x, y] / (float)secondGray[x, y];
+                    differences[x, y] = (float)firstGray[x, y] / (float)Math.Max(1f, secondGray[x, y]);
                     avg += differences[x, y];
                 }
             }
             average = avg / (CompressSize.Height * CompressSize.Width);
 
-            thisOne.Dispose();
-            theOtherOne.Dispose();
             return differences;
         }
 
