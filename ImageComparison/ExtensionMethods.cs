@@ -11,13 +11,17 @@ namespace XnaFan.ImageComparison
 {
     public static class ExtensionMethods
     {
-
+        public static void SetCompressSize(int width, int height)
+        {
+            CompressSize = new Size(width, height);
+        }
 
         //the font to use for the DifferenceImages
         private static readonly Font DefaultFont = new Font("Arial", 8);
 
         //the brushes to use for the DifferenceImages
         private static Brush[] brushes = new Brush[256];
+        private static Size CompressSize = new Size(16, 16);
 
         //Create the brushes in varying intensities
         static ExtensionMethods()
@@ -58,7 +62,7 @@ namespace XnaFan.ImageComparison
                 if (b > threshold) { diffPixels++; }
             }
 
-            return diffPixels / 256f;
+            return diffPixels / (float)(CompressSize.Width * CompressSize.Height);
         }
 
         /// <summary>
@@ -73,8 +77,8 @@ namespace XnaFan.ImageComparison
             byte[,] img1GrayscaleValues = img1.GetGrayScaleValues();
             byte[,] img2GrayscaleValues = img2.GetGrayScaleValues();
 
-            var normalizedHistogram1 = new double[16, 16];
-            var normalizedHistogram2 = new double[16, 16];
+            var normalizedHistogram1 = new double[CompressSize.Width, CompressSize.Height];
+            var normalizedHistogram2 = new double[CompressSize.Width, CompressSize.Height];
 
             double histSum1 = 0.0;
             double histSum2 = 0.0;
@@ -130,8 +134,8 @@ namespace XnaFan.ImageComparison
         public static Bitmap GetDifferenceImage(this Image img1, Image img2, bool adjustColorSchemeToMaxDifferenceFound = false, bool absoluteText = false)
         {
             //create a 16x16 tiles image with information about how much the two images differ
-            int cellsize = 16;  //each tile is 16 pixels wide and high
-            Bitmap bmp = new Bitmap(16 * cellsize + 1, 16 * cellsize + 1); //16 blocks * 16 pixels + a borderpixel at left/bottom
+            int cellsize = CompressSize.Width;  //each tile is 16 pixels wide and high
+            Bitmap bmp = new Bitmap(CompressSize.Width * cellsize + 1, CompressSize.Height * cellsize + 1); //16 blocks * 16 pixels + a borderpixel at left/bottom
 
             using (Graphics g = Graphics.FromImage(bmp))
             {
@@ -201,15 +205,15 @@ namespace XnaFan.ImageComparison
         /// <returns>the differences between the two images as a doublearray</returns>
         public static byte[,] GetDifferences(this Image img1, Image img2)
         {
-            Bitmap thisOne = (Bitmap)img1.Resize(16, 16).GetGrayScaleVersion();
-            Bitmap theOtherOne = (Bitmap)img2.Resize(16, 16).GetGrayScaleVersion();
-            byte[,] differences = new byte[16, 16];
+            Bitmap thisOne = (Bitmap)img1.Resize(CompressSize.Width, CompressSize.Height).GetGrayScaleVersion();
+            Bitmap theOtherOne = (Bitmap)img2.Resize(CompressSize.Width, CompressSize.Height).GetGrayScaleVersion();
+            byte[,] differences = new byte[CompressSize.Width, CompressSize.Height];
             byte[,] firstGray = thisOne.GetGrayScaleValues();
             byte[,] secondGray = theOtherOne.GetGrayScaleValues();
 
-            for (int y = 0; y < 16; y++)
+            for (int y = 0; y < CompressSize.Height; y++)
             {
-                for (int x = 0; x < 16; x++)
+                for (int x = 0; x < CompressSize.Width; x++)
                 {
                     differences[x, y] = (byte)Math.Abs(firstGray[x, y] - secondGray[x, y]);
                 }
@@ -226,13 +230,13 @@ namespace XnaFan.ImageComparison
         /// <returns>A doublearray (16x16) containing the lightness of the 256 sections</returns>
         public static byte[,] GetGrayScaleValues(this Image img)
         {
-            using (Bitmap thisOne = (Bitmap)img.Resize(16, 16).GetGrayScaleVersion())
+            using (Bitmap thisOne = (Bitmap)img.Resize(CompressSize.Width, CompressSize.Height).GetGrayScaleVersion())
             {
-                byte[,] grayScale = new byte[16, 16];
+                byte[,] grayScale = new byte[CompressSize.Width, CompressSize.Height];
 
-                for (int y = 0; y < 16; y++)
+                for (int y = 0; y < CompressSize.Height; y++)
                 {
-                    for (int x = 0; x < 16; x++)
+                    for (int x = 0; x < CompressSize.Width; x++)
                     {
                         grayScale[x, y] = (byte)Math.Abs(thisOne.GetPixel(x, y).R);
                     }

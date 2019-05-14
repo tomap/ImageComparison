@@ -2,3 +2,4 @@
 bin/
 obj/
 /TestingImageComparison_Console/SampleImages
+/.vs/ImageComparison/v15/Server/sqlite3

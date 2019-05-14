@@ -47,11 +47,11 @@ namespace TestingImageComparison_Console
             //get the full path of the images
             string image1Path = Path.Combine(sampleImagesFolder.FullName, bmp1);
             string image2Path = Path.Combine(sampleImagesFolder.FullName, bmp2);
-
             //compare the two
             Console.WriteLine("Comparing: " + bmp1 + " and " + bmp2 + ", with a threshold of " + threshold);
             Bitmap firstBmp = (Bitmap)Image.FromFile(image1Path);
             Bitmap secondBmp = (Bitmap)Image.FromFile(image2Path);
+            SetMaximumSize(firstBmp, secondBmp, 64);
             //get the difference as a bitmap
             firstBmp.GetDifferenceImage(secondBmp, true)
                 .Save(image1Path + "_diff.png");
@@ -68,6 +68,14 @@ namespace TestingImageComparison_Console
             Console.WriteLine(hist.ToString());
             Console.WriteLine("ENTER to continue...");
             Console.ReadLine();
+        }
+
+        private static void SetMaximumSize(Bitmap firstBmp, Bitmap secondBmp, float avgSize)
+        {
+            float w = Math.Min(firstBmp.Width, secondBmp.Width);
+            float h = Math.Min(firstBmp.Height, secondBmp.Height);
+            float avg = Math.Min((float)w / avgSize, (float)h / avgSize);
+            XnaFan.ImageComparison.ExtensionMethods.SetCompressSize((int)Math.Round(w / avg), (int)Math.Round(h / avg));
         }
 
         static void ShowDuplicates()
