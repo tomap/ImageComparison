@@ -51,15 +51,16 @@ namespace XnaFan.ImageComparison
         /// <param name="img2">The image to compare to</param>
         /// <param name="threshold">How big a difference (out of 255) will be ignored - the default is 3.</param>
         /// <returns>The difference between the two images as a percentage</returns>
-        public static float PercentageDifference(this Image img1, Image img2, byte threshold = 3)
+        public static float PercentageDifference(this Image img1, Image img2, float threshold = 0.2f)
         {
-            byte[,] differences = img1.GetDifferences(img2);
+            float average = 0;
+            float[,] differences = img1.GetDifferences(img2, ref average);
 
             int diffPixels = 0;
 
-            foreach (byte b in differences)
+            foreach (float b in differences)
             {
-                if (b > threshold) { diffPixels++; }
+                if (Math.Abs(b - average) > threshold) { diffPixels++; }
             }
 
             return diffPixels / (float)(CompressSize.Width * CompressSize.Height);
@@ -134,22 +135,23 @@ namespace XnaFan.ImageComparison
         public static Bitmap GetDifferenceImage(this Image img1, Image img2, bool adjustColorSchemeToMaxDifferenceFound = false, bool absoluteText = false)
         {
             //create a 16x16 tiles image with information about how much the two images differ
-            int cellsize = CompressSize.Width;  //each tile is 16 pixels wide and high
+            int cellsize = 16;  //each tile is 16 pixels wide and high
             Bitmap bmp = new Bitmap(CompressSize.Width * cellsize + 1, CompressSize.Height * cellsize + 1); //16 blocks * 16 pixels + a borderpixel at left/bottom
 
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.FillRectangle(Brushes.Black, 0, 0, bmp.Width, bmp.Height);
-                byte[,] differences = img1.GetDifferences(img2);
-                byte maxDifference = 255;
+                float average = 0;
+                float[,] differences = img1.GetDifferences(img2, ref average);
+                float maxDifference = 255;
 
                 //if wanted - adjust the color scheme, by finding the new maximum difference
                 if (adjustColorSchemeToMaxDifferenceFound)
                 {
                     maxDifference = 0;
-                    foreach (byte b in differences)
+                    foreach (float b in differences)
                     {
-                        if (b > maxDifference)
+                        if (Math.Abs(b - average) > maxDifference)
                         {
                             maxDifference = b;
                         }
@@ -166,13 +168,13 @@ namespace XnaFan.ImageComparison
             return bmp;
         }
 
-        private static void DrawDifferencesToBitmap(bool absoluteText, int cellsize, Graphics g, byte[,] differences, byte maxDifference)
+        private static void DrawDifferencesToBitmap(bool absoluteText, int cellsize, Graphics g, float[,] differences, float maxDifference)
         {
             for (int y = 0; y < differences.GetLength(1); y++)
             {
                 for (int x = 0; x < differences.GetLength(0); x++)
                 {
-                    byte cellValue = differences[x, y];
+                    float cellValue = differences[x, y];
                     string cellText = null;
 
                     if (absoluteText)
@@ -181,11 +183,11 @@ namespace XnaFan.ImageComparison
                     }
                     else
                     {
-                        cellText = string.Format("{0}%", (int)cellValue);
+                        cellText = string.Format("{0:N2}%", cellValue);
                     }
 
                     float percentageDifference = (float)differences[x, y] / maxDifference;
-                    int colorIndex = (int)(255 * percentageDifference);
+                    int colorIndex = Math.Min(255, (int)(255 * percentageDifference));
 
                     g.FillRectangle(brushes[colorIndex], x * cellsize, y * cellsize, cellsize, cellsize);
                     g.DrawRectangle(Pens.Blue, x * cellsize, y * cellsize, cellsize, cellsize);
@@ -203,21 +205,25 @@ namespace XnaFan.ImageComparison
         /// <param name="img1">The first image</param>
         /// <param name="img2">The image to compare with</param>
         /// <returns>the differences between the two images as a doublearray</returns>
-        public static byte[,] GetDifferences(this Image img1, Image img2)
+        public static float[,] GetDifferences(this Image img1, Image img2, ref float average)
         {
             Bitmap thisOne = (Bitmap)img1.Resize(CompressSize.Width, CompressSize.Height).GetGrayScaleVersion();
             Bitmap theOtherOne = (Bitmap)img2.Resize(CompressSize.Width, CompressSize.Height).GetGrayScaleVersion();
-            byte[,] differences = new byte[CompressSize.Width, CompressSize.Height];
+            float[,] differences = new float[CompressSize.Width, CompressSize.Height];
             byte[,] firstGray = thisOne.GetGrayScaleValues();
             byte[,] secondGray = theOtherOne.GetGrayScaleValues();
+            float avg = 0;
 
             for (int y = 0; y < CompressSize.Height; y++)
             {
                 for (int x = 0; x < CompressSize.Width; x++)
                 {
-                    differences[x, y] = (byte)Math.Abs(firstGray[x, y] - secondGray[x, y]);
+                    differences[x, y] = (float)firstGray[x, y] / (float)secondGray[x, y];
+                    avg += differences[x, y];
                 }
             }
+            average = avg / (CompressSize.Height * CompressSize.Width);
+
             thisOne.Dispose();
             theOtherOne.Dispose();
             return differences;
